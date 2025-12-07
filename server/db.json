@@ -1,0 +1,293 @@
+{
+  "users": [],
+  "projects": [
+    {
+      "id": "OiT2iTayTDZO378XXRDNr",
+      "name": "test",
+      "description": "this is a test project",
+      "createdAt": "2025-12-05T05:26:07.724Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": "9GYTfciL0IynHo4U_PPle",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Interview 1",
+      "text": "This is a test interview",
+      "createdAt": "2025-12-05T05:26:32.943Z"
+    },
+    {
+      "id": "t0l1jLUDKIT82O7CkuprX",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing",
+      "text": "Fuzzing represents a dynamic testing method that inputs malformed or unpredictable data to a system to detect security issues, bugs, or system failures. We consider it an essential tool to include in your testing suite.\n\nThis chapter of our Testing Handbook describes how to start fuzzing your project quickly. After covering the basics, we will dive deeply into more advanced fuzzing techniques and show you how to bring your testing setup to the next level. By the end of the chapter, you’ll know how to choose applicable fuzzers, write fuzzing harnesses, understand their outputs, and apply them to real-world projects. The chapter can be followed step-by-step and completed within an afternoon.\n\nThe concept of fuzz testing dates back over 30 years, during which time it was used for examining UNIX command-line utilities (see An empirical study of the reliability of UNIX utilities). Since then, fuzzing has evolved from purely generating random input (blackbox fuzzing) to generating inputs based on feedback gathered while executing the tested program (graybox fuzzing). Because these utilities are written in C, we will start by describing how to fuzz C/C++ projects. Before that, though, we’ll explain a bit about the intended audience and structure of this chapter.\n\nAudience and scope #\nThis fuzzing chapter, just like the whole testing handbook, targets both developers and security engineers. Readers should already be comfortable with the programming language of the respective section and be familiar with common UNIX tools like Bash, Git, and cURL. Experience with Debian, Ubuntu, or any other Linux is required for following and executing the included examples.\n\nFirst and foremost, the testing handbook is for engineers who test their own code. Therefore, the chapter focuses on fuzzing projects for which you have the source available.\n\nEven though we want to provide a starting point for fuzzing, we try to point to the relevant documentation if it is available, instead of reiterating what has been written over and over in countless other guides. Our guidance focuses on how to continue after a basic setup is working. Oftentimes the first iteration of a fuzzing setup can be improved easily by following techniques such as analyzing the code coverage.",
+      "createdAt": "2025-12-06T18:58:00.292Z"
+    },
+    {
+      "id": "544DdnOENO95EUUNdwCDe",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Example",
+      "text": "Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.\n\nLorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+      "createdAt": "2025-12-06T19:06:14.512Z"
+    }
+  ],
+  "codes": [
+    {
+      "id": "miDLR2GMRw0nUozTe9bwD",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Test",
+      "description": "This is to describe a test",
+      "flags": [
+        "test-1 flag"
+      ]
+    },
+    {
+      "id": "XoasieeVuYsJlpLM7T6qs",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Test 2",
+      "description": "this is test for double coding"
+    },
+    {
+      "id": "D3ndoEvNMfvVv2kRU2UHZ",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing introduction"
+    },
+    {
+      "id": "b2xxrSc7X74G4tnUcKIJr",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Example background"
+    }
+  ],
+  "segments": [
+    {
+      "id": "hrKKpCnVuElLdtamDvjXf",
+      "documentId": "9GYTfciL0IynHo4U_PPle",
+      "startOffset": 0,
+      "endOffset": 24,
+      "text": "This is a test interview",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-05T05:33:43.015Z"
+    },
+    {
+      "id": "TYsPBCxxVq7rGYmgyMYq3",
+      "documentId": "9GYTfciL0IynHo4U_PPle",
+      "startOffset": 10,
+      "endOffset": 24,
+      "text": "test interview",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-05T05:36:20.748Z"
+    },
+    {
+      "id": "ayYaHn1le-7PZ4F3oxJ27",
+      "documentId": "9GYTfciL0IynHo4U_PPle",
+      "startOffset": 1,
+      "endOffset": 11,
+      "text": "his is a t",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-05T05:39:42.119Z"
+    },
+    {
+      "id": "wNn16xaQ2XXG-Bld4rsAH",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 0,
+      "endOffset": 219,
+      "text": "Fuzzing represents a dynamic testing method that inputs malformed or unpredictable data to a system to detect security issues, bugs, or system failures. We consider it an essential tool to include in your testing suite.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T18:59:16.603Z"
+    },
+    {
+      "id": "ERiA7Q6Qb-FUyjifWYfT9",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 0,
+      "endOffset": 699,
+      "text": "Fuzzing represents a dynamic testing method that inputs malformed or unpredictable data to a system to detect security issues, bugs, or system failures. We consider it an essential tool to include in your testing suite.\n\nThis chapter of our Testing Handbook describes how to start fuzzing your project quickly. After covering the basics, we will dive deeply into more advanced fuzzing techniques and show you how to bring your testing setup to the next level. By the end of the chapter, you’ll know how to choose applicable fuzzers, write fuzzing harnesses, understand their outputs, and apply them to real-world projects. The chapter can be followed step-by-step and completed within an afternoon.\n",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T18:59:39.589Z"
+    },
+    {
+      "id": "Cne80wy1CD21pYdIPsMRw",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 1277,
+      "endOffset": 1297,
+      "text": "Audience and scope #",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T18:59:51.935Z"
+    },
+    {
+      "id": "gGHYH6zqQ1jvMngM6ysoy",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 1277,
+      "endOffset": 1678,
+      "text": "Audience and scope #\nThis fuzzing chapter, just like the whole testing handbook, targets both developers and security engineers. Readers should already be comfortable with the programming language of the respective section and be familiar with common UNIX tools like Bash, Git, and cURL. Experience with Debian, Ubuntu, or any other Linux is required for following and executing the included examples.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T18:59:57.950Z"
+    },
+    {
+      "id": "Mb4kwLubzQV6osJde2mE1",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 1844,
+      "endOffset": 1867,
+      "text": "available.\n\nEven though",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:04:22.728Z"
+    },
+    {
+      "id": "PuzpiXS97MqfcY6OOEDNs",
+      "documentId": "t0l1jLUDKIT82O7CkuprX",
+      "startOffset": 1875,
+      "endOffset": 1921,
+      "text": " to provide a starting point for fuzzing, we t",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:25:53.213Z"
+    },
+    {
+      "id": "ShpXnAfKg6J0Acdr6smSh",
+      "documentId": "544DdnOENO95EUUNdwCDe",
+      "startOffset": 88,
+      "endOffset": 138,
+      "text": " pellentesque sem placerat. In id cursus mi pretiu",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:26:42.495Z"
+    },
+    {
+      "id": "5v29izpm3pWV02KC3iVtv",
+      "documentId": "544DdnOENO95EUUNdwCDe",
+      "startOffset": 948,
+      "endOffset": 1315,
+      "text": "us ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:29:13.899Z"
+    },
+    {
+      "id": "e8lx6dmrj4QB7c8t6a7HK",
+      "documentId": "544DdnOENO95EUUNdwCDe",
+      "startOffset": 1756,
+      "endOffset": 1811,
+      "text": "Lorem ipsum dolor sit amet consectetur adipiscing elit.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:29:21.113Z"
+    },
+    {
+      "id": "r_2DSN36PvdibjTDjWgmk",
+      "documentId": "544DdnOENO95EUUNdwCDe",
+      "startOffset": 2195,
+      "endOffset": 2251,
+      "text": "Lorem ipsum dolor sit amet consectetur adipiscing elit. ",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:29:28.359Z"
+    },
+    {
+      "id": "m53KaKsQsXUn3F0HhFlml",
+      "documentId": "544DdnOENO95EUUNdwCDe",
+      "startOffset": 1844,
+      "endOffset": 2193,
+      "text": " pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-06T19:35:59.600Z"
+    }
+  ],
+  "codedSegments": [
+    {
+      "id": "xKw0lJE5_wZu0WG5Hq42d",
+      "segmentId": "hrKKpCnVuElLdtamDvjXf",
+      "codeId": "miDLR2GMRw0nUozTe9bwD",
+      "createdAt": "2025-12-05T05:33:43.015Z"
+    },
+    {
+      "id": "V_x6CVoUCzXxti53Pj1aM",
+      "segmentId": "TYsPBCxxVq7rGYmgyMYq3",
+      "codeId": "XoasieeVuYsJlpLM7T6qs",
+      "createdAt": "2025-12-05T05:36:20.748Z"
+    },
+    {
+      "id": "rrbbuN5EdKf3bLvVdEddh",
+      "segmentId": "TYsPBCxxVq7rGYmgyMYq3",
+      "codeId": "miDLR2GMRw0nUozTe9bwD",
+      "createdAt": "2025-12-05T05:36:20.748Z"
+    },
+    {
+      "id": "j2t6MJYpnQcbyJ3Yovf8C",
+      "segmentId": "ayYaHn1le-7PZ4F3oxJ27",
+      "codeId": "miDLR2GMRw0nUozTe9bwD",
+      "createdAt": "2025-12-05T05:39:42.119Z"
+    },
+    {
+      "id": "ZQYkGL4kp9gwrqj_NrLqW",
+      "segmentId": "ayYaHn1le-7PZ4F3oxJ27",
+      "codeId": "XoasieeVuYsJlpLM7T6qs",
+      "createdAt": "2025-12-05T05:39:42.119Z"
+    },
+    {
+      "id": "P7F_7Dzep2iPHzACWAFNm",
+      "segmentId": "wNn16xaQ2XXG-Bld4rsAH",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-06T18:59:16.603Z"
+    },
+    {
+      "id": "OR7wi6YX5oBcfVqzafljZ",
+      "segmentId": "ERiA7Q6Qb-FUyjifWYfT9",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-06T18:59:39.589Z"
+    },
+    {
+      "id": "pU2y-s9k6XrfA67k0lpeK",
+      "segmentId": "Cne80wy1CD21pYdIPsMRw",
+      "codeId": "miDLR2GMRw0nUozTe9bwD",
+      "createdAt": "2025-12-06T18:59:51.935Z"
+    },
+    {
+      "id": "60PqtPInrdIkTJrg5FVPA",
+      "segmentId": "gGHYH6zqQ1jvMngM6ysoy",
+      "codeId": "miDLR2GMRw0nUozTe9bwD",
+      "createdAt": "2025-12-06T18:59:57.950Z"
+    },
+    {
+      "id": "GFBr-Q_8Tdp5BggWalCOb",
+      "segmentId": "Mb4kwLubzQV6osJde2mE1",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-06T19:04:22.728Z"
+    },
+    {
+      "id": "u5MNwXpkaby9I19-mgryU",
+      "segmentId": "PuzpiXS97MqfcY6OOEDNs",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-06T19:25:53.213Z"
+    },
+    {
+      "id": "4-i3aQEkfl8v03wAFKaS8",
+      "segmentId": "ShpXnAfKg6J0Acdr6smSh",
+      "codeId": "XoasieeVuYsJlpLM7T6qs",
+      "createdAt": "2025-12-06T19:26:42.495Z"
+    },
+    {
+      "id": "QG2WAw479t3j2cw__gV1C",
+      "segmentId": "5v29izpm3pWV02KC3iVtv",
+      "codeId": "XoasieeVuYsJlpLM7T6qs",
+      "createdAt": "2025-12-06T19:29:13.899Z"
+    },
+    {
+      "id": "3L8AIp9OfQXfPiUy8KPfd",
+      "segmentId": "e8lx6dmrj4QB7c8t6a7HK",
+      "codeId": "b2xxrSc7X74G4tnUcKIJr",
+      "createdAt": "2025-12-06T19:29:21.113Z"
+    },
+    {
+      "id": "kpECqZIVlX_OG9gVC-FrD",
+      "segmentId": "r_2DSN36PvdibjTDjWgmk",
+      "codeId": "b2xxrSc7X74G4tnUcKIJr",
+      "createdAt": "2025-12-06T19:29:28.359Z"
+    },
+    {
+      "id": "vIAsK1unLEYmaiDLIz6oV",
+      "segmentId": "m53KaKsQsXUn3F0HhFlml",
+      "codeId": "XoasieeVuYsJlpLM7T6qs",
+      "createdAt": "2025-12-06T19:35:59.600Z"
+    }
+  ],
+  "settings": [
+    {
+      "id": "default",
+      "aiEnabled": false
+    }
+  ]
+}
