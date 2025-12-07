@@ -138,4 +138,56 @@ router.delete(
   }
 );
 
+router.get(
+  '/projects/:projectId/codes/:codeId/usage',
+  async (req, res, next) => {
+    try {
+      const { projectId, codeId } = req.params;
+      const db = await readDb();
+
+      const project = db.projects.find((p) => p.id === projectId);
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found.' });
+      }
+
+      const code = db.codes.find(
+        (c) => c.id === codeId && c.projectId === projectId
+      );
+      if (!code) {
+        return res.status(404).json({ message: 'Code not found.' });
+      }
+
+      const codedSegmentsForCode = db.codedSegments.filter(
+        (cs) => cs.codeId === codeId
+      );
+      if (codedSegmentsForCode.length === 0) {
+        return res.json({ code, usage: [] });
+      }
+
+      const segmentIds = new Set(codedSegmentsForCode.map((cs) => cs.segmentId));
+      const usage = db.segments
+        .filter((segment) => segmentIds.has(segment.id))
+        .map((segment) => {
+          const document = db.documents.find((d) => d.id === segment.documentId);
+          if (!document || document.projectId !== projectId) {
+            return null;
+          }
+          return {
+            segmentId: segment.id,
+            documentId: document.id,
+            documentName: document.name,
+            text: segment.text,
+            startOffset: segment.startOffset,
+            endOffset: segment.endOffset
+          };
+        })
+        .filter((entry) => entry !== null);
+
+      res.json({ code, usage });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;

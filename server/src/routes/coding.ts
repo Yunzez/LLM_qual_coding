@@ -37,6 +37,36 @@ router.get('/documents/:documentId/coding', async (req, res, next) => {
   }
 });
 
+router.delete('/documents/:documentId/coding', async (req, res, next) => {
+  try {
+    const { documentId } = req.params;
+    const db = await readDb();
+    const document = db.documents.find((d) => d.id === documentId);
+
+    if (!document) {
+      return res.status(404).json({ message: 'Document not found.' });
+    }
+
+    const segmentIdsForDocument = new Set(
+      db.segments.filter((s) => s.documentId === documentId).map((s) => s.id)
+    );
+
+    if (segmentIdsForDocument.size === 0) {
+      return res.status(204).send();
+    }
+
+    db.segments = db.segments.filter((s) => !segmentIdsForDocument.has(s.id));
+    db.codedSegments = db.codedSegments.filter(
+      (cs) => !segmentIdsForDocument.has(cs.segmentId)
+    );
+
+    await writeDb(db);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.post('/documents/:documentId/segments', async (req, res, next) => {
   try {
     const { documentId } = req.params;
@@ -145,6 +175,15 @@ router.put('/segments/:segmentId', async (req, res, next) => {
     }
 
     const uniqueCodeIds = Array.from(new Set(codeIds));
+
+    // If no codes remain, remove the segment entirely so the document text
+    // is treated as uncoded again.
+    if (uniqueCodeIds.length === 0) {
+      db.codedSegments = db.codedSegments.filter((cs) => cs.segmentId !== segment.id);
+      db.segments = db.segments.filter((s) => s.id !== segment.id);
+      await writeDb(db);
+      return res.status(204).send();
+    }
 
     for (const codeId of uniqueCodeIds) {
       const code = db.codes.find((c) => c.id === codeId);

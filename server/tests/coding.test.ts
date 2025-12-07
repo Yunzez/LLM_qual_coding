@@ -110,6 +110,86 @@ describe('Coding API', () => {
     expect(codingRes.body.segments[0].codes).toHaveLength(2);
   });
 
+  it('removes a segment when codes are cleared', async () => {
+    const projectId = await createProject();
+    const documentId = await createDocument(projectId);
+    const codeId = await createCode(projectId, 'Code A');
+
+    const textToCode = 'example';
+    const fullText = 'This is some example text.';
+    const startOffset = fullText.indexOf(textToCode);
+    const endOffset = startOffset + textToCode.length;
+
+    const createSegmentRes = await request(app)
+      .post(`/documents/${documentId}/segments`)
+      .send({
+        startOffset,
+        endOffset,
+        codeIds: [codeId]
+      })
+      .expect(201);
+
+    const segmentId = createSegmentRes.body.segment.id as string;
+
+    await request(app)
+      .put(`/segments/${segmentId}`)
+      .send({ codeIds: [] })
+      .expect(204);
+
+    const codingRes = await request(app)
+      .get(`/documents/${documentId}/coding`)
+      .expect(200);
+
+    expect(codingRes.body.segments).toHaveLength(0);
+  });
+
+  it('clears all coding for a document', async () => {
+    const projectId = await createProject();
+    const documentId = await createDocument(projectId);
+    const codeId = await createCode(projectId, 'Code A');
+
+    const fullText = 'First segment. Second segment.';
+    const first = 'First';
+    const second = 'Second';
+
+    const firstStart = fullText.indexOf(first);
+    const firstEnd = firstStart + first.length;
+    const secondStart = fullText.indexOf(second);
+    const secondEnd = secondStart + second.length;
+
+    await request(app)
+      .post(`/documents/${documentId}/segments`)
+      .send({
+        startOffset: firstStart,
+        endOffset: firstEnd,
+        codeIds: [codeId]
+      })
+      .expect(201);
+
+    await request(app)
+      .post(`/documents/${documentId}/segments`)
+      .send({
+        startOffset: secondStart,
+        endOffset: secondEnd,
+        codeIds: [codeId]
+      })
+      .expect(201);
+
+    const beforeRes = await request(app)
+      .get(`/documents/${documentId}/coding`)
+      .expect(200);
+    expect(beforeRes.body.segments.length).toBe(2);
+
+    await request(app)
+      .delete(`/documents/${documentId}/coding`)
+      .expect(204);
+
+    const afterRes = await request(app)
+      .get(`/documents/${documentId}/coding`)
+      .expect(200);
+    expect(afterRes.body.segments.length).toBe(0);
+  });
+
   it('replaces overlapping segments when creating a new one', async () => {
     const projectId = await createProject();
     const documentId = await createDocument(projectId);

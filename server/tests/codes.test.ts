@@ -77,4 +77,45 @@ describe('Codes API', () => {
 
     expect(listRes.body[0].flags).toEqual(['cycle 1']);
   });
+
+  it('returns usage for a code grouped by segments', async () => {
+    const projectId = await createProject();
+
+    // Create a document and a code, then code a segment.
+    const docRes = await request(app)
+      .post(`/projects/${projectId}/documents`)
+      .send({ name: 'Doc 1', text: 'Some example text.' })
+      .expect(201);
+    const documentId = docRes.body.id as string;
+
+    const codeRes = await request(app)
+      .post(`/projects/${projectId}/codes`)
+      .send({ name: 'Code A' })
+      .expect(201);
+    const codeId = codeRes.body.id as string;
+
+    const fullText = 'Some example text.';
+    const textToCode = 'example';
+    const startOffset = fullText.indexOf(textToCode);
+    const endOffset = startOffset + textToCode.length;
+
+    await request(app)
+      .post(`/documents/${documentId}/segments`)
+      .send({
+        startOffset,
+        endOffset,
+        codeIds: [codeId]
+      })
+      .expect(201);
+
+    const usageRes = await request(app)
+      .get(`/projects/${projectId}/codes/${codeId}/usage`)
+      .expect(200);
+
+    expect(usageRes.body.code.id).toBe(codeId);
+    expect(Array.isArray(usageRes.body.usage)).toBe(true);
+    expect(usageRes.body.usage.length).toBe(1);
+    expect(usageRes.body.usage[0].documentId).toBe(documentId);
+    expect(usageRes.body.usage[0].text).toBe(textToCode);
+  });
 });

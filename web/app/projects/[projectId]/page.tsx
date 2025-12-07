@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -53,6 +54,36 @@ export default function ProjectDetailPage() {
   const [editingDescription, setEditingDescription] = useState('');
   const [editingFlagsText, setEditingFlagsText] = useState('');
   const [savingCode, setSavingCode] = useState(false);
+
+  interface CodeUsageEntry {
+    segmentId: string;
+    documentId: string;
+    documentName: string;
+    text: string;
+    startOffset: number;
+    endOffset: number;
+  }
+
+  const [usageCode, setUsageCode] = useState<Code | null>(null);
+  const [usageEntries, setUsageEntries] = useState<CodeUsageEntry[]>([]);
+  const [usageLoading, setUsageLoading] = useState(false);
+  const [usageError, setUsageError] = useState<string | null>(null);
+
+  const [flagsSearch, setFlagsSearch] = useState('');
+
+  const allFlags = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const code of codes) {
+      for (const flag of code.flags ?? []) {
+        const trimmed = flag.trim();
+        if (!trimmed) continue;
+        counts.set(trimmed, (counts.get(trimmed) ?? 0) + 1);
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [codes]);
 
   function downloadJson(filename: string, data: unknown) {
     const json = JSON.stringify(data, null, 2);
@@ -193,6 +224,22 @@ export default function ProjectDetailPage() {
     }
   }
 
+  function handleDocumentFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.txt')) {
+      setError('Only .txt files are supported for upload.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === 'string' ? reader.result : '';
+      setDocName((current) => (current.trim() ? current : file.name.replace(/\.txt$/i, '')));
+      setDocText(text);
+    };
+    reader.readAsText(file);
+  }
+
   async function handleCreateCode(e: React.FormEvent) {
     e.preventDefault();
     if (!codeName.trim()) {
@@ -225,6 +272,28 @@ export default function ProjectDetailPage() {
       setError((err as Error).message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function openUsageModal(code: Code) {
+    setUsageCode(code);
+    setUsageEntries([]);
+    setUsageError(null);
+    setUsageLoading(true);
+    try {
+      const res = await fetch(
+        `${BACKEND_URL}/projects/${projectId}/codes/${code.id}/usage`
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || 'Failed to load code usage.');
+      }
+      const data = (await res.json()) as { usage: CodeUsageEntry[] };
+      setUsageEntries(data.usage);
+    } catch (err) {
+      setUsageError((err as Error).message);
+    } finally {
+      setUsageLoading(false);
     }
   }
 
@@ -372,180 +441,243 @@ export default function ProjectDetailPage() {
       </div>
 
       {activeTab === 'documents' && (
-        <section className="card">
-          <h2 className="card-title">Documents</h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="card">
+            <h2 className="card-title">New document</h2>
 
-          <form className="mt-3 space-y-3" onSubmit={handleCreateDocument}>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-700">Name</label>
-              <input
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={docName}
-                onChange={(e) => setDocName(e.target.value)}
-                placeholder="Interview 1"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-700">Text (.txt)</label>
-              <textarea
-                className="h-32 w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={docText}
-                onChange={(e) => setDocText(e.target.value)}
-                placeholder="Paste transcript text here..."
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary"
-            >
-              {loading ? 'Saving…' : 'Add document'}
-            </button>
-          </form>
+            <form className="mt-3 space-y-3" onSubmit={handleCreateDocument}>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-slate-700">Name</label>
+                <input
+                  className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={docName}
+                  onChange={(e) => setDocName(e.target.value)}
+                  placeholder="Interview 1"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-slate-700">
+                  Text (.txt)
+                </label>
+                <textarea
+                  className="h-32 w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={docText}
+                  onChange={(e) => setDocText(e.target.value)}
+                  placeholder="Paste transcript text here..."
+                />
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="text-[11px] font-medium text-slate-700">
+                    Or upload .txt file
+                  </label>
+                  <input
+                    type="file"
+                    accept=".txt"
+                    onChange={handleDocumentFileChange}
+                    className="text-[11px] text-slate-600"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Uploading a file will populate the text field so you can review or edit
+                  before saving.
+                </p>
+              </div>
+              <button type="submit" disabled={loading} className="btn-primary">
+                {loading ? 'Saving…' : 'Add document'}
+              </button>
+            </form>
+          </section>
 
-          <ul className="mt-4 divide-y divide-slate-100 text-sm">
-            {documents.map((doc) => (
-              <li key={doc.id} className="flex items-center justify-between py-2">
-                <div>
-                  <p className="font-medium text-slate-800">{doc.name}</p>
-                  <p className="text-xs text-slate-500">
-                    Created {new Date(doc.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Link
-                    href={`/projects/${projectId}/documents/${doc.id}`}
-                    className="text-xs font-medium text-blue-600 hover:underline"
-                  >
-                    Open
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeleteDocument(doc.id)}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-            {documents.length === 0 && (
-              <li className="py-2 text-xs text-slate-500">No documents yet.</li>
-            )}
-          </ul>
-        </section>
+          <section className="card">
+            <h2 className="card-title">Documents</h2>
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
+              {documents.map((doc) => (
+                <li key={doc.id} className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="font-medium text-slate-800">{doc.name}</p>
+                    <p className="text-xs text-slate-500">
+                      Created {new Date(doc.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/projects/${projectId}/documents/${doc.id}`}
+                      className="text-xs font-medium text-blue-600 hover:underline"
+                    >
+                      Open
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteDocument(doc.id)}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {documents.length === 0 && (
+                <li className="py-2 text-xs text-slate-500">No documents yet.</li>
+              )}
+            </ul>
+          </section>
+        </div>
       )}
 
       {activeTab === 'codes' && (
-        <section className="card">
-          <div className="flex items-center justify-between">
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="card">
+            <div className="flex items-center justify-between">
+              <h2 className="card-title">New code</h2>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportByCode}
+                  className="btn-secondary"
+                >
+                  Export by code
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportByFlag}
+                  className="btn-secondary"
+                >
+                  Export by flag
+                </button>
+              </div>
+            </div>
+
+            <form className="mt-3 space-y-3" onSubmit={handleCreateCode}>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-slate-700">Name</label>
+                <input
+                  className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={codeName}
+                  onChange={(e) => setCodeName(e.target.value)}
+                  placeholder="Barrier"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-slate-700">
+                  Description
+                </label>
+                <textarea
+                  className="h-24 w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={codeDescription}
+                  onChange={(e) => setCodeDescription(e.target.value)}
+                  placeholder="Optional inclusion/exclusion criteria, examples, etc."
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-slate-700">
+                  Flags / categories
+                </label>
+                <input
+                  className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={codeFlagsText}
+                  onChange={(e) => setCodeFlagsText(e.target.value)}
+                  placeholder="Comma-separated labels (e.g., cycle 1, emotion, barrier)"
+                />
+                <p className="text-[11px] text-slate-500">
+                  Flags are lightweight labels (e.g., level, type) attached to this code.
+                </p>
+              </div>
+              <button type="submit" disabled={loading} className="btn-primary">
+                {loading ? 'Saving…' : 'Add code'}
+              </button>
+            </form>
+          </section>
+
+          <section className="card">
             <h2 className="card-title">Codes</h2>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleExportByCode}
-                className="btn-secondary"
-              >
-                Export by code
-              </button>
-              <button
-                type="button"
-                onClick={handleExportByFlag}
-                className="btn-secondary"
-              >
-                Export by flag
-              </button>
-            </div>
-          </div>
+            <ul className="mt-3 divide-y divide-slate-100 text-sm">
+              {codes.map((code) => (
+                <li key={code.id} className="flex items-start justify-between py-2">
+                  <div>
+                    <p className="font-medium text-slate-800">{code.name}</p>
+                    {code.description && (
+                      <p className="text-xs text-slate-500">{code.description}</p>
+                    )}
+                    {code.flags && code.flags.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {code.flags.map((flag) => (
+                          <span key={flag} className="badge-flag">
+                            {flag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void openUsageModal(code)}
+                      className="text-xs text-slate-600 hover:underline"
+                    >
+                      Usage
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCodeId(code.id);
+                        setEditingName(code.name);
+                        setEditingDescription(code.description ?? '');
+                        setEditingFlagsText((code.flags ?? []).join(', '));
+                      }}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteCode(code.id)}
+                      className="text-xs text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {codes.length === 0 && (
+                <li className="py-2 text-xs text-slate-500">No codes yet.</li>
+              )}
+            </ul>
+          </section>
 
-          <form className="mt-3 space-y-3" onSubmit={handleCreateCode}>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-700">Name</label>
+          <section className="card">
+            <div className="flex items-center justify-between">
+              <h2 className="card-title">Flags</h2>
               <input
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={codeName}
-                onChange={(e) => setCodeName(e.target.value)}
-                placeholder="Barrier"
+                className="w-32 rounded-md border border-slate-300 px-2 py-1 text-[11px] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Search…"
+                value={flagsSearch}
+                onChange={(e) => setFlagsSearch(e.target.value)}
               />
             </div>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-700">Description</label>
-              <textarea
-                className="h-24 w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={codeDescription}
-                onChange={(e) => setCodeDescription(e.target.value)}
-                placeholder="Optional inclusion/exclusion criteria, examples, etc."
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="block text-xs font-medium text-slate-700">
-                Flags / categories
-              </label>
-              <input
-                className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                value={codeFlagsText}
-                onChange={(e) => setCodeFlagsText(e.target.value)}
-                placeholder="Comma-separated labels (e.g., cycle 1, emotion, barrier)"
-              />
-              <p className="text-[11px] text-slate-500">
-                Flags are lightweight labels (e.g., level, type) attached to this code.
-              </p>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary"
-            >
-              {loading ? 'Saving…' : 'Add code'}
-            </button>
-          </form>
-
-          <ul className="mt-4 divide-y divide-slate-100 text-sm">
-            {codes.map((code) => (
-              <li key={code.id} className="flex items-start justify-between py-2">
-                <div>
-                  <p className="font-medium text-slate-800">{code.name}</p>
-                  {code.description && (
-                    <p className="text-xs text-slate-500">{code.description}</p>
-                  )}
-                  {code.flags && code.flags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {code.flags.map((flag) => (
-                        <span key={flag} className="badge-flag">
-                          {flag}
-                        </span>
-                      ))}
+            <ul className="mt-3 divide-y divide-slate-100 text-xs">
+              {allFlags
+                .filter((flag) => {
+                  const query = flagsSearch.toLowerCase();
+                  if (!query) return true;
+                  return flag.name.toLowerCase().includes(query);
+                })
+                .map((flag) => (
+                  <li key={flag.name} className="flex items-center justify-between py-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="badge-flag">{flag.name}</span>
+                      <span className="text-[11px] text-slate-500">
+                        {flag.count} code{flag.count === 1 ? '' : 's'}
+                      </span>
                     </div>
-                  )}
-                </div>
-                 <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingCodeId(code.id);
-                      setEditingName(code.name);
-                      setEditingDescription(code.description ?? '');
-                      setEditingFlagsText((code.flags ?? []).join(', '));
-                    }}
-                    className="mr-3 mt-1 text-xs text-blue-600 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleDeleteCode(code.id)}
-                    className="mt-1 text-xs text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </li>
-            ))}
-            {codes.length === 0 && (
-              <li className="py-2 text-xs text-slate-500">No codes yet.</li>
-            )}
-          </ul>
-        </section>
+                  </li>
+                ))}
+              {allFlags.length === 0 && (
+                <li className="py-2 text-xs text-slate-500">
+                  No flags yet. Add flags when editing codes to organize your codebook.
+                </li>
+              )}
+            </ul>
+          </section>
+        </div>
       )}
 
       {editingCodeId && (
@@ -615,6 +747,69 @@ export default function ProjectDetailPage() {
                 className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {savingCode ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {usageCode && (
+        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40">
+          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-lg">
+            <h2 className="text-sm font-medium text-slate-800">
+              Usage of <span className="font-semibold">{usageCode.name}</span>
+            </h2>
+            {usageError && <p className="mt-1 text-xs text-red-600">{usageError}</p>}
+            <p className="mt-1 text-xs text-slate-600">
+              Showing where this code has been applied across documents.
+            </p>
+            <div className="mt-3 max-h-[60vh] space-y-3 overflow-y-auto text-xs">
+              {usageLoading ? (
+                <p className="text-slate-500">Loading…</p>
+              ) : usageEntries.length === 0 ? (
+                <p className="text-slate-500">This code has not been applied yet.</p>
+              ) : (
+                Object.entries(
+                  usageEntries.reduce<Record<string, CodeUsageEntry[]>>((acc, entry) => {
+                    if (!acc[entry.documentId]) acc[entry.documentId] = [];
+                    acc[entry.documentId].push(entry);
+                    return acc;
+                  }, {})
+                ).map(([documentId, entries]) => (
+                  <div key={documentId} className="rounded border border-slate-200 p-2">
+                    <p className="text-xs font-medium text-slate-900">
+                      {
+                        entries[0]?.documentName
+                      }{' '}
+                      <span className="text-[11px] text-slate-500">
+                        ({entries.length} segment{entries.length === 1 ? '' : 's'})
+                      </span>
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {entries.map((entry) => (
+                        <li
+                          key={entry.segmentId}
+                          className="rounded bg-slate-50 p-2 text-[11px] text-slate-800"
+                        >
+                          {entry.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setUsageCode(null);
+                  setUsageEntries([]);
+                  setUsageError(null);
+                }}
+                className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
+              >
+                Close
               </button>
             </div>
           </div>

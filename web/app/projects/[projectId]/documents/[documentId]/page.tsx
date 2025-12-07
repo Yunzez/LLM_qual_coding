@@ -151,6 +151,18 @@ export default function DocumentCodingPage() {
   const [editingFlagsText, setEditingFlagsText] = useState('');
   const [savingCode, setSavingCode] = useState(false);
 
+  const allFlags = useMemo(() => {
+    const set = new Set<string>();
+    for (const code of codes) {
+      for (const flag of code.flags ?? []) {
+        if (flag.trim()) {
+          set.add(flag.trim());
+        }
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [codes]);
+
   const documentText = doc?.text ?? '';
 
   async function fetchInitialData() {
@@ -252,25 +264,17 @@ export default function DocumentCodingPage() {
     }
 
     const container = document.getElementById('document-text');
-    let start: number | null = null;
-    let end: number | null = null;
-
-    if (container) {
-      const offsets = getOffsetsWithin(container, range);
-      if (offsets) {
-        start = offsets.start;
-        end = offsets.end;
-      }
+    if (!container || !container.contains(range.commonAncestorContainer)) {
+      // Ignore selections outside the document text.
+      return;
     }
 
-    // Fallback: if we cannot compute offsets from the DOM tree, fall back to a simple
-    // text search. This may be ambiguous for repeated text, but is better than failing.
-    if (start === null || end === null) {
-      const index = documentText.indexOf(selectedText);
-      if (index === -1) return;
-      start = index;
-      end = index + selectedText.length;
+    const offsets = getOffsetsWithin(container, range);
+    if (!offsets) {
+      return;
     }
+
+    const { start, end } = offsets;
 
     setSelectionRange({ start, end, text: selectedText });
     setSelectionPopup({ x: e.clientX + 8, y: e.clientY + 8 });
@@ -295,7 +299,14 @@ export default function DocumentCodingPage() {
   }
 
   async function applyCodesToSelection() {
-    if (!selectionRange || selectedCodeIds.length === 0) return;
+    if (!selectionRange) return;
+    // If there is an existing segment and no codes are selected, treat this as un-coding.
+    if (activeSegmentId && selectedCodeIds.length === 0) {
+      await clearCodesFromSegment();
+      return;
+    }
+    // For new segments, do nothing if no codes are selected.
+    if (!activeSegmentId && selectedCodeIds.length === 0) return;
     setLoading(true);
     setError(null);
     try {
@@ -324,6 +335,64 @@ export default function DocumentCodingPage() {
       setSelectionRange(null);
       setActiveSegmentId(null);
       setSelectionPopup(null);
+      await fetchInitialData();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function clearCodesFromSegment() {
+    if (!activeSegmentId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/segments/${activeSegmentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ codeIds: [] })
+      });
+      if (!res.ok && res.status !== 204) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || 'Failed to remove codes.');
+      }
+      setShowCodePicker(false);
+      setSelectedCodeIds([]);
+      setSelectionRange(null);
+      setActiveSegmentId(null);
+      setSelectionPopup(null);
+      await fetchInitialData();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function clearAllCodingForDocument() {
+    if (
+      !window.confirm(
+        'Clear all codes from this document? This will remove all coded segments but keep the text and codebook.'
+      )
+    ) {
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/documents/${documentId}/coding`, {
+        method: 'DELETE'
+      });
+      if (!res.ok && res.status !== 204) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || 'Failed to clear coding for this document.');
+      }
+      setSelectionRange(null);
+      setActiveSegmentId(null);
+      setSelectedCodeIds([]);
+      setSelectionPopup(null);
+      setAiSuggestions([]);
       await fetchInitialData();
     } catch (err) {
       setError((err as Error).message);
@@ -494,15 +563,25 @@ export default function DocumentCodingPage() {
       <div className="grid gap-4 md:grid-cols-[2fr,1fr]">
         <section className="card">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-slate-800">Document</h2>
-            <p className="text-xs text-slate-500">
-              Select text in the document, then use the tooltip to add codes or ask
-              AI (if enabled).
-            </p>
+            <div>
+              <h2 className="text-sm font-medium text-slate-800">Document</h2>
+              <p className="text-xs text-slate-500">
+                Select text in the document, then use the tooltip to add codes or ask
+                AI (if enabled).
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void clearAllCodingForDocument()}
+              disabled={loading}
+              className="rounded-md border border-red-300 px-2 py-1 text-[11px] font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Clear all codes
+            </button>
           </div>
           <div
             id="document-text"
-            className="max-h-[80vh] whitespace-pre-wrap overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-800"
+            className="h-[80vh] whitespace-pre-wrap overflow-y-auto rounded border border-slate-200 bg-slate-50 p-3 text-sm leading-relaxed text-slate-800"
           >
             {runs.map((run, index) => {
               if (run.kind === 'plain') {
@@ -551,7 +630,7 @@ export default function DocumentCodingPage() {
         </section>
 
         <section className="space-y-4">
-          <div className="card">
+          <div className="card h-[30vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="card-title">Codes</h2>
               <input
@@ -573,98 +652,84 @@ export default function DocumentCodingPage() {
                     flags.includes(query)
                   );
                 })
-                .map((code) => {
-                  const isEditing = editingCodeId === code.id;
-                  if (isEditing) {
-                    return (
-                      <li key={code.id} className="py-2 text-xs">
-                        <div className="space-y-1">
-                          <input
-                            className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            placeholder="Code name"
-                          />
-                          <textarea
-                            className="h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            value={editingDescription}
-                            onChange={(e) => setEditingDescription(e.target.value)}
-                            placeholder="Description (optional)"
-                          />
-                          <input
-                            className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            value={editingFlagsText}
-                            onChange={(e) => setEditingFlagsText(e.target.value)}
-                            placeholder="Flags, comma-separated"
-                          />
+                .map((code) => (
+                  <li key={code.id} className="flex items-start justify-between py-2">
+                    <div>
+                      <p className="text-xs font-medium text-slate-800">{code.name}</p>
+                      {code.description && (
+                        <p className="text-[11px] text-slate-500">{code.description}</p>
+                      )}
+                      {code.flags && code.flags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {code.flags.map((flag) => (
+                            <span
+                              key={flag}
+                              className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700"
+                            >
+                              {flag}
+                            </span>
+                          ))}
                         </div>
-                        <div className="mt-2 flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingCodeId(null);
-                              setEditingName('');
-                              setEditingDescription('');
-                              setEditingFlagsText('');
-                            }}
-                            className="rounded-md border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            disabled={savingCode}
-                            onClick={() => void saveCodeEdits()}
-                            className="rounded-md bg-blue-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {savingCode ? 'Saving…' : 'Save'}
-                          </button>
-                        </div>
-                      </li>
-                    );
-                  }
-
-                  return (
-                    <li key={code.id} className="flex items-start justify-between py-2">
-                      <div>
-                        <p className="text-xs font-medium text-slate-800">{code.name}</p>
-                        {code.description && (
-                          <p className="text-[11px] text-slate-500">
-                            {code.description}
-                          </p>
-                        )}
-                        {code.flags && code.flags.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {code.flags.map((flag) => (
-                              <span
-                                key={flag}
-                                className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700"
-                              >
-                                {flag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingCodeId(code.id);
-                          setEditingName(code.name);
-                          setEditingDescription(code.description ?? '');
-                          setEditingFlagsText((code.flags ?? []).join(', '));
-                        }}
-                        className="ml-2 mt-1 text-[11px] text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-                    </li>
-                  );
-                })}
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCodeId(code.id);
+                        setEditingName(code.name);
+                        setEditingDescription(code.description ?? '');
+                        setEditingFlagsText((code.flags ?? []).join(', '));
+                      }}
+                      className="ml-2 mt-1 text-[11px] text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </li>
+                ))}
               {codes.length === 0 && (
                 <li className="py-2 text-helper">
                   No codes yet. Add codes on the project page or use the code picker while
                   coding to define new codes.
+                </li>
+              )}
+            </ul>
+          </div>
+
+          <div className="card h-[20vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="card-title">Flags</h2>
+              <input
+                className="w-32 rounded-md border border-slate-300 px-2 py-1 text-[11px] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Search…"
+                value={sidebarCodeSearch}
+                onChange={(e) => setSidebarCodeSearch(e.target.value)}
+              />
+            </div>
+            <ul className="mt-3 divide-y divide-slate-100 text-xs">
+              {allFlags
+                .filter((flag) => {
+                  const query = sidebarCodeSearch.toLowerCase();
+                  if (!query) return true;
+                  return flag.toLowerCase().includes(query);
+                })
+                .map((flag) => {
+                  const count = codes.filter((code) =>
+                    (code.flags ?? []).includes(flag)
+                  ).length;
+                  return (
+                    <li key={flag} className="flex items-center justify-between py-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="badge-flag">{flag}</span>
+                        <span className="text-[11px] text-slate-500">
+                          {count} code{count === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              {allFlags.length === 0 && (
+                <li className="py-2 text-helper">
+                  No flags yet. Add flags when editing codes to organize your codebook.
                 </li>
               )}
             </ul>
@@ -748,9 +813,104 @@ export default function DocumentCodingPage() {
         </div>
       )}
 
+      {editingCodeId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40">
+          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg">
+            <h2 className="text-sm font-medium text-slate-800">Edit code</h2>
+            <p className="mt-1 text-xs text-slate-600">
+              Changes apply to this code across the entire project. Review carefully before
+              saving.
+            </p>
+            <div className="mt-3 space-y-2 text-xs">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-700">
+                  Name
+                </label>
+                <input
+                  className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  placeholder="Code name"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-700">
+                  Description
+                </label>
+                <textarea
+                  className="h-20 w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={editingDescription}
+                  onChange={(e) => setEditingDescription(e.target.value)}
+                  placeholder="Optional inclusion/exclusion criteria, examples, etc."
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-medium text-slate-700">
+                  Flags / categories
+                </label>
+                <input
+                  className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  value={editingFlagsText}
+                  onChange={(e) => setEditingFlagsText(e.target.value)}
+                  placeholder="Flags, comma-separated"
+                />
+                {allFlags.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {allFlags.map((flag) => (
+                      <button
+                        key={flag}
+                        type="button"
+                        onClick={() => {
+                          const current = editingFlagsText
+                            .split(',')
+                            .map((f) => f.trim())
+                            .filter((f) => f.length > 0);
+                          if (current.includes(flag)) return;
+                          const next = current.length > 0 ? [...current, flag] : [flag];
+                          setEditingFlagsText(next.join(', '));
+                        }}
+                        className="badge-flag"
+                      >
+                        {flag}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-[10px] text-slate-500">
+                  Flags are lightweight labels attached to this code and used across the
+                  project.
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingCodeId(null);
+                  setEditingName('');
+                  setEditingDescription('');
+                  setEditingFlagsText('');
+                }}
+                className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingCode}
+                onClick={() => void saveCodeEdits()}
+                className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingCode ? 'Saving…' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCodePicker && selectionRange && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg">
+          <div className="w-full max-w-lg rounded-md bg-white p-4 shadow-lg">
             <h2 className="text-sm font-medium text-slate-800">Apply codes</h2>
             <p className="mt-1 text-xs text-slate-600">
               Select one or more codes to apply. Existing codes for this segment are
@@ -764,7 +924,7 @@ export default function DocumentCodingPage() {
                 value={codeSearch}
                 onChange={(e) => setCodeSearch(e.target.value)}
               />
-              <div className="max-h-40 space-y-1 overflow-y-auto border border-slate-200 p-2">
+              <div className="max-h-[50vh] space-y-1 overflow-y-auto border border-slate-200 p-2">
                 {codes
                   .filter((code) => {
                     const query = codeSearch.toLowerCase();
@@ -835,25 +995,39 @@ export default function DocumentCodingPage() {
               </button>
             </div>
 
-            <div className="mt-3 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowCodePicker(false);
-                  setSelectedCodeIds([]);
-                }}
-                className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={loading || selectedCodeIds.length === 0}
-                onClick={() => void applyCodesToSelection()}
-                className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {loading ? 'Applying…' : 'Apply codes'}
-              </button>
+            <div className="mt-3 flex justify-between gap-2">
+              <div>
+                {activeSegmentId && (
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => void clearCodesFromSegment()}
+                    className="rounded-md border border-red-300 px-3 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    Remove codes
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCodePicker(false);
+                    setSelectedCodeIds([]);
+                  }}
+                  className="rounded-md border border-slate-300 px-3 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={loading || (!activeSegmentId && selectedCodeIds.length === 0)}
+                  onClick={() => void applyCodesToSelection()}
+                  className="rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white shadow hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loading ? 'Applying…' : 'Apply codes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
