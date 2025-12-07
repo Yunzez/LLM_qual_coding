@@ -22,31 +22,24 @@
       "name": "Fuzzing",
       "text": "SUT/target: The System Under Test (SUT) is the piece of software that is being tested. It can either be a standalone application like a command-line program or a library.\nFuzzing/Fuzzer: Fuzz testing, also known as fuzzing, is an automated software testing method that supplies a SUT with invalid, unexpected, or random data as inputs. The program that implements the fuzzing algorithm is called a fuzzer.\nTest case: A test case is the concrete input that is given to the testing harness. Usually, it is a string or bitstring. A test input can also be encoded in a more complex format like an abstract syntax tree.\n(Testing/fuzzing) harness: A harness handles the test setup for a given SUT. The harness wraps the software and initializes it such that it is ready for executing test cases. A harness integrates a SUT into a testing environment.\nlibFuzzer harness: A harness that is compatible with the libFuzzer library. The term refers to the LLVMFuzzerTestOneInput function.\nFuzz test: A fuzz test consists of a fuzzing harness and the SUT. You might refer to a compiled binary that includes the harness and SUT as a fuzz test.\nFuzzing campaign: A fuzzing campaign is an execution of the fuzzer. A fuzzing campaign starts when the fuzzer starts testing and stops when the fuzzing procedure is stopped.\nCorpus: The evolving set of test cases. During a fuzzing campaign, the corpus usually grows as new test cases are discovered.\nSeed Corpus: Fuzzing campaigns are usually bootstrapped using an initial set of test cases. This set is also called a seed corpus. Each test case of the corpus is called a seed.\nFuzzing engine/runtime: The fuzzing engine/runtime is part of the fuzzer that is executed when the fuzzing starts. It orchestrates the fuzzing process.\nInstrumentation: The act of instrumenting a program involves adding non-functional changes in order to retrieve data from it or making it more secure/robust.\nCode coverage: A metric to measure the degree to which the source code of a program is executed.\n",
       "createdAt": "2025-12-07T02:46:53.081Z"
+    },
+    {
+      "id": "u8pUA4u8hqaQxilHH6FqF",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Tech News",
+      "text": "the corporate VC arm of health insurer CSS, invests in high-growth start-ups that are advancing healthcare with digital technologies. It particularly promotes solutions that create sustainable added value for health insurers and their customers.\n\nThanks to the support of CSS, the SwissHealth Ventures digital health fund has now doubled its volume from CHF 50 million to CHF 100 million. The additional funds will enable around twelve further start-up investments in the coming years. SwissHealth Ventures operates with an evergreen structure, which means that the returns flow back into the fund and are available for further investments.\n\nSwissHealth Ventures plans to use the fresh funds to invest in two to three new digital health start-ups each year. It will invest jointly with other European venture capitalists with the aim of supporting the start-ups in their market entry in Switzerland through the health insurance company's expertise and network. \"We believe that the digital health sector will grow at an even faster pace in the coming years and is set to become even more attractive within the healthcare industry. Technological innovations, AI and the trend towards outpatient treatment are contributing significantly to this,\" explains Jonathan Fraser, Head of Corporate Venturing, SwissHealth Ventures. This represents a strategic opportunity for CSS: it gains early access to leading start-ups and innovative solutions that can be integrated into its offerings.\n\nSwissHealth Ventures has invested in twelve companies to date – four of them from Switzerland – and two digital health funds. The results are impressive: the twelve existing portfolio companies have created over 3,200 jobs and are financially successful. ‘More than 330,000 CSS members have already used one of their services, giving them access to innovations that improve their lives and make the healthcare system more sustainable,’ explains Fraser. One example is Flow Neuroscience from Sweden: CSS was the first health insurance company worldwide to reimburse Flow's new therapy for the treatment of depression, which is already being used in 16 Swiss clinics today.\n\nSwissHealth Ventures invests in digital business models in the healthcare sector in a growth phase with a monthly turnover of approximately CHF 100,000 or more. In addition to start-ups that offer effective benefits for CSS policyholders, companies that make the healthcare system more efficient are also eligible. A good example is Lyfegen from Basel. Jonathan Fraser says: ‘This platform helps us negotiate fair prices with pharmaceutical companies. This year alone, we have saved CHF 3.5 million as a result.’",
+      "createdAt": "2025-12-07T03:37:53.390Z"
     }
   ],
   "codes": [
     {
-      "id": "miDLR2GMRw0nUozTe9bwD",
-      "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Test",
-      "description": "This is to describe a test",
-      "flags": [
-        "test-1 flag"
-      ]
-    },
-    {
-      "id": "XoasieeVuYsJlpLM7T6qs",
-      "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Test 2",
-      "description": "this is test for double coding",
-      "flags": [
-        "test-1 flag"
-      ]
-    },
-    {
       "id": "D3ndoEvNMfvVv2kRU2UHZ",
       "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Fuzzing introduction"
+      "name": "Fuzzing introduction",
+      "flags": [
+        "testing of for fuzz",
+        "test-1 flag"
+      ]
     },
     {
       "id": "b2xxrSc7X74G4tnUcKIJr",
@@ -54,13 +47,50 @@
       "name": "Example background"
     },
     {
-      "id": "A5QXPHmXJXt-upneWZX8Q",
+      "id": "tFvqr4GVxZw8oXuQHgl8d",
       "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "testing 3",
-      "description": "another test",
+      "name": "Tech news intro",
+      "description": "A intro to a typical text news",
       "flags": [
-        "Fuzzing tag"
+        "news specific",
+        "testing",
+        "test-1 flag"
       ]
+    },
+    {
+      "id": "-N7tE-MdxD1vqypfwKwq4",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Investment news",
+      "description": "A code for news segments about investments or venture capital."
+    },
+    {
+      "id": "JvNB6g3bBvyoIwHLbiMx3",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Metric definition",
+      "description": "Definition of metrics used in software testing or development"
+    },
+    {
+      "id": "6iOTqYQV0ZqebNNhePuwn",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing concept",
+      "description": "A code for describing the basics of fuzzing and its application."
+    },
+    {
+      "id": "0lAVCGC_CbnxXX2X-24A0",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing concept",
+      "description": "A code for describing the basics of fuzzing and its application."
+    },
+    {
+      "id": "OnfO3L5HvotNCsfcHNBry",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing campaign",
+      "description": "A code for describing a fuzzing campaign and its goals."
+    },
+    {
+      "id": "rgekFSyQekC2C_d_nGO64",
+      "projectId": "OiT2iTayTDZO378XXRDNr",
+      "name": "Fuzzing framework"
     }
   ],
   "segments": [
@@ -117,33 +147,81 @@
       "text": "SUT/target: The System Under Test (SUT) is the piece of software that is being tested. It can either be a standalone application like a command-line program or a library.",
       "createdBy": "default-user",
       "createdAt": "2025-12-07T02:53:42.706Z"
+    },
+    {
+      "id": "rDE-V45kyJwGd-ZC7G3we",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 977,
+      "endOffset": 1129,
+      "text": "Fuzz test: A fuzz test consists of a fuzzing harness and the SUT. You might refer to a compiled binary that includes the harness and SUT as a fuzz test.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T03:35:24.933Z"
+    },
+    {
+      "id": "0obIESFFOqAunsHdnRDSa",
+      "documentId": "u8pUA4u8hqaQxilHH6FqF",
+      "startOffset": 0,
+      "endOffset": 245,
+      "text": "the corporate VC arm of health insurer CSS, invests in high-growth start-ups that are advancing healthcare with digital technologies. It particularly promotes solutions that create sustainable added value for health insurers and their customers.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T03:38:13.592Z"
+    },
+    {
+      "id": "lAg9vEJYteO2144mud2c8",
+      "documentId": "u8pUA4u8hqaQxilHH6FqF",
+      "startOffset": 642,
+      "endOffset": 1481,
+      "text": "SwissHealth Ventures plans to use the fresh funds to invest in two to three new digital health start-ups each year. It will invest jointly with other European venture capitalists with the aim of supporting the start-ups in their market entry in Switzerland through the health insurance company's expertise and network. \"We believe that the digital health sector will grow at an even faster pace in the coming years and is set to become even more attractive within the healthcare industry. Technological innovations, AI and the trend towards outpatient treatment are contributing significantly to this,\" explains Jonathan Fraser, Head of Corporate Venturing, SwissHealth Ventures. This represents a strategic opportunity for CSS: it gains early access to leading start-ups and innovative solutions that can be integrated into its offerings.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T03:38:39.712Z"
+    },
+    {
+      "id": "9fucmdKtoj_29M5STMx0M",
+      "documentId": "u8pUA4u8hqaQxilHH6FqF",
+      "startOffset": 2156,
+      "endOffset": 2668,
+      "text": "SwissHealth Ventures invests in digital business models in the healthcare sector in a growth phase with a monthly turnover of approximately CHF 100,000 or more. In addition to start-ups that offer effective benefits for CSS policyholders, companies that make the healthcare system more efficient are also eligible. A good example is Lyfegen from Basel. Jonathan Fraser says: ‘This platform helps us negotiate fair prices with pharmaceutical companies. This year alone, we have saved CHF 3.5 million as a result.’",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T04:27:09.818Z"
+    },
+    {
+      "id": "h-R6DJfWozH__0-qx-LZ_",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 1918,
+      "endOffset": 2014,
+      "text": "Code coverage: A metric to measure the degree to which the source code of a program is executed.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T04:43:59.355Z"
+    },
+    {
+      "id": "kMcRdpmtuW81yN_1rKhsy",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 1608,
+      "endOffset": 1917,
+      "text": "Fuzzing engine/runtime: The fuzzing engine/runtime is part of the fuzzer that is executed when the fuzzing starts. It orchestrates the fuzzing process.\nInstrumentation: The act of instrumenting a program involves adding non-functional changes in order to retrieve data from it or making it more secure/robust.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T04:49:33.346Z"
+    },
+    {
+      "id": "G4pOkZbjKzBhKwJg279eQ",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 1304,
+      "endOffset": 1607,
+      "text": "Corpus: The evolving set of test cases. During a fuzzing campaign, the corpus usually grows as new test cases are discovered.\nSeed Corpus: Fuzzing campaigns are usually bootstrapped using an initial set of test cases. This set is also called a seed corpus. Each test case of the corpus is called a seed.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T04:59:08.558Z"
+    },
+    {
+      "id": "VbcJqU8NOuOGmgC3IPyb_",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 615,
+      "endOffset": 976,
+      "text": "(Testing/fuzzing) harness: A harness handles the test setup for a given SUT. The harness wraps the software and initializes it such that it is ready for executing test cases. A harness integrates a SUT into a testing environment.\nlibFuzzer harness: A harness that is compatible with the libFuzzer library. The term refers to the LLVMFuzzerTestOneInput function.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-07T05:00:55.412Z"
     }
   ],
   "codedSegments": [
-    {
-      "id": "4-i3aQEkfl8v03wAFKaS8",
-      "segmentId": "ShpXnAfKg6J0Acdr6smSh",
-      "codeId": "XoasieeVuYsJlpLM7T6qs",
-      "createdAt": "2025-12-06T19:26:42.495Z"
-    },
-    {
-      "id": "QG2WAw479t3j2cw__gV1C",
-      "segmentId": "5v29izpm3pWV02KC3iVtv",
-      "codeId": "XoasieeVuYsJlpLM7T6qs",
-      "createdAt": "2025-12-06T19:29:13.899Z"
-    },
-    {
-      "id": "vIAsK1unLEYmaiDLIz6oV",
-      "segmentId": "m53KaKsQsXUn3F0HhFlml",
-      "codeId": "XoasieeVuYsJlpLM7T6qs",
-      "createdAt": "2025-12-06T19:35:59.600Z"
-    },
-    {
-      "id": "aTRTBw2JV2f3DvgxQ0OYz",
-      "segmentId": "A2qDhJkFh0BCXdDApppxG",
-      "codeId": "A5QXPHmXJXt-upneWZX8Q",
-      "createdAt": "2025-12-07T02:46:22.374Z"
-    },
     {
       "id": "suFSeU1FQSpTog6W0DJKs",
       "segmentId": "Fh3mHQH_uwVP8pghSOkyR",
@@ -155,12 +233,73 @@
       "segmentId": "1asPXszB2UZzA832v81Nf",
       "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
       "createdAt": "2025-12-07T02:53:42.706Z"
+    },
+    {
+      "id": "AhJCIP6Sp8R-MF23dxfoH",
+      "segmentId": "rDE-V45kyJwGd-ZC7G3we",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-07T03:35:24.933Z"
+    },
+    {
+      "id": "80X4A0a8Vw8YUQzANwrZX",
+      "segmentId": "lAg9vEJYteO2144mud2c8",
+      "codeId": "tFvqr4GVxZw8oXuQHgl8d",
+      "createdAt": "2025-12-07T03:38:43.384Z"
+    },
+    {
+      "id": "89gqGx6nPN75QZlyl0b30",
+      "segmentId": "0obIESFFOqAunsHdnRDSa",
+      "codeId": "tFvqr4GVxZw8oXuQHgl8d",
+      "createdAt": "2025-12-07T03:38:48.484Z"
+    },
+    {
+      "id": "plExmlf3V0mIJIeYBB8IC",
+      "segmentId": "0obIESFFOqAunsHdnRDSa",
+      "codeId": "b2xxrSc7X74G4tnUcKIJr",
+      "createdAt": "2025-12-07T03:38:48.484Z"
+    },
+    {
+      "id": "DQAzeyFbwMlKpGO8V6UwC",
+      "segmentId": "9fucmdKtoj_29M5STMx0M",
+      "codeId": "tFvqr4GVxZw8oXuQHgl8d",
+      "createdAt": "2025-12-07T04:27:09.818Z"
+    },
+    {
+      "id": "qvvGBZGQ9JORDZkYU02K8",
+      "segmentId": "h-R6DJfWozH__0-qx-LZ_",
+      "codeId": "JvNB6g3bBvyoIwHLbiMx3",
+      "createdAt": "2025-12-07T04:43:59.355Z"
+    },
+    {
+      "id": "PoCXAtjekv4FpQfF_j-F6",
+      "segmentId": "kMcRdpmtuW81yN_1rKhsy",
+      "codeId": "6iOTqYQV0ZqebNNhePuwn",
+      "createdAt": "2025-12-07T04:49:33.346Z"
+    },
+    {
+      "id": "xyQSpk76XqfqViwFh3bMD",
+      "segmentId": "G4pOkZbjKzBhKwJg279eQ",
+      "codeId": "OnfO3L5HvotNCsfcHNBry",
+      "createdAt": "2025-12-07T04:59:08.558Z"
+    },
+    {
+      "id": "j0d5wu4CzVXb11DzLtkrG",
+      "segmentId": "VbcJqU8NOuOGmgC3IPyb_",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-07T05:00:55.412Z"
+    },
+    {
+      "id": "fYe5NWESdggk70nvaStpa",
+      "segmentId": "VbcJqU8NOuOGmgC3IPyb_",
+      "codeId": "rgekFSyQekC2C_d_nGO64",
+      "createdAt": "2025-12-07T05:00:55.412Z"
     }
   ],
   "settings": [
     {
       "id": "default",
-      "aiEnabled": false
+      "aiEnabled": true,
+      "aiSuggestionLimit": 2
     }
   ]
 }

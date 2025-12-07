@@ -9,7 +9,7 @@ const DEFAULT_DB: DbSchema = {
   codes: [],
   segments: [],
   codedSegments: [],
-  settings: [{ id: 'default', aiEnabled: false }]
+  settings: [{ id: 'default', aiEnabled: false, aiSuggestionLimit: 2 }]
 };
 
 const DB_FILE =
@@ -45,4 +45,3 @@ export async function resetDb(): Promise<void> {
   inMemoryDb = { ...DEFAULT_DB };
   await writeDb(inMemoryDb);
 }
-

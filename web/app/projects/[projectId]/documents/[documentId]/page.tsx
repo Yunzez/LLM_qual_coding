@@ -46,6 +46,24 @@ interface Settings {
   aiEnabled: boolean;
 }
 
+type AiExistingSuggestion = {
+  type: 'existing';
+  codeId: string;
+  rationale?: string;
+  confidence?: number;
+};
+
+type AiNewSuggestion = {
+  type: 'new';
+  name: string;
+  description?: string;
+  flags?: string[];
+  rationale?: string;
+  confidence?: number;
+};
+
+type AiSuggestion = AiExistingSuggestion | AiNewSuggestion;
+
 type Run =
   | {
       kind: 'plain';
@@ -115,9 +133,9 @@ export default function DocumentCodingPage() {
 
   const [showCodePicker, setShowCodePicker] = useState(false);
   const [selectedCodeIds, setSelectedCodeIds] = useState<string[]>([]);
-  const [aiSuggestions, setAiSuggestions] = useState<
-    { codeName: string; rationale: string }[]
-  >([]);
+  const [aiSuggestions, setAiSuggestions] = useState<AiSuggestion[]>([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [newCodeName, setNewCodeName] = useState('');
@@ -251,7 +269,9 @@ export default function DocumentCodingPage() {
   }, [documentText, segments]);
 
   function handleMouseUp(e: ReactMouseEvent) {
-    if (!documentText) return;
+    // Ignore mouse events while the code picker is open to avoid
+    // interfering with the current selection and offsets.
+    if (!documentText || showCodePicker) return;
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       return;
@@ -481,8 +501,9 @@ export default function DocumentCodingPage() {
 
   async function requestAiSuggestions() {
     if (!selectionRange) return;
-    setLoading(true);
-    setError(null);
+    setAiLoading(true);
+    setAiError(null);
+    console.log('Requesting AI suggestions for text:', selectionRange.text);
     try {
       const res = await fetch(`${BACKEND_URL}/ai/suggest`, {
         method: 'POST',
@@ -490,21 +511,28 @@ export default function DocumentCodingPage() {
         body: JSON.stringify({
           text: selectionRange.text,
           projectId,
-          documentId
+          documentId,
+          projectName: project?.name ?? null,
+          codes: codes.map((code) => ({
+            id: code.id,
+            name: code.name,
+            description: code.description,
+            flags: code.flags
+          }))
         })
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.message || 'Failed to get AI suggestions.');
       }
-      const data = (await res.json()) as {
-        suggestions: { codeName: string; rationale: string }[];
-      };
-      setAiSuggestions(data.suggestions);
+      const data = (await res.json()) as { suggestions?: AiSuggestion[] };
+      console.log("AI suggestions data:", data);
+      setAiSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
     } catch (err) {
-      setError((err as Error).message);
+      setAiError((err as Error).message);
+      setAiSuggestions([]);
     } finally {
-      setLoading(false);
+      setAiLoading(false);
     }
   }
 
@@ -630,7 +658,7 @@ export default function DocumentCodingPage() {
         </section>
 
         <section className="space-y-4">
-          <div className="card h-[30vh] overflow-y-auto">
+          <div className="card h-[60vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="card-title">Codes</h2>
               <input
@@ -664,7 +692,7 @@ export default function DocumentCodingPage() {
                           {code.flags.map((flag) => (
                             <span
                               key={flag}
-                              className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700"
+                              className="badge-flag"
                             >
                               {flag}
                             </span>
@@ -695,7 +723,7 @@ export default function DocumentCodingPage() {
             </ul>
           </div>
 
-          <div className="card h-[20vh] overflow-y-auto">
+          <div className="card h-[30vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h2 className="card-title">Flags</h2>
               <input
@@ -734,30 +762,6 @@ export default function DocumentCodingPage() {
               )}
             </ul>
           </div>
-
-          <div className="card">
-            <h2 className="card-title">AI suggestions (stub)</h2>
-            {settings?.aiEnabled ? (
-              aiSuggestions.length === 0 ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  Select text and click &quot;Ask AI&quot; to see placeholder suggestions.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2 text-xs">
-                  {aiSuggestions.map((s, idx) => (
-                    <li key={idx} className="rounded border border-slate-200 p-2">
-                      <p className="font-medium text-slate-800">{s.codeName}</p>
-                      <p className="text-slate-600">{s.rationale}</p>
-                    </li>
-                  ))}
-                </ul>
-              )
-            ) : (
-              <p className="mt-2 text-xs text-slate-500">
-                AI suggestions are disabled. Enable them in settings.
-              </p>
-            )}
-          </div>
         </section>
       </div>
 
@@ -766,7 +770,7 @@ export default function DocumentCodingPage() {
           className="fixed z-20 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-800 shadow-lg"
           style={{ left: selectionPopup.x, top: selectionPopup.y }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => setShowCodePicker(true)}
@@ -774,27 +778,32 @@ export default function DocumentCodingPage() {
             >
               Add code
             </button>
-            {settings?.aiEnabled && (
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => void requestAiSuggestions()}
-                className="rounded bg-slate-800 px-2 py-1 text-[11px] font-medium text-white hover:bg-slate-900"
+                onClick={() => {
+                  setSelectionRange(null);
+                  setSelectionPopup(null);
+                  setAiSuggestions([]);
+                  setActiveSegmentId(null);
+                }}
+                className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
               >
-                Ask AI
+                Clear
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                setSelectionRange(null);
-                setSelectionPopup(null);
-                setAiSuggestions([]);
-                setActiveSegmentId(null);
-              }}
-              className="rounded border border-slate-300 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-100"
-            >
-              Clear
-            </button>
+              {settings?.aiEnabled && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCodePicker(true);
+                    void requestAiSuggestions();
+                  }}
+                  className="rounded bg-slate-800 px-2 py-1 text-[11px] font-medium text-white hover:bg-slate-900"
+                >
+                  Ask AI
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -814,8 +823,8 @@ export default function DocumentCodingPage() {
       )}
 
       {editingCodeId && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg">
+        <div className="fixed inset-0 z-40 flex items-center justify-center modal-backdrop">
+          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg modal-panel">
             <h2 className="text-sm font-medium text-slate-800">Edit code</h2>
             <p className="mt-1 text-xs text-slate-600">
               Changes apply to this code across the entire project. Review carefully before
@@ -909,90 +918,207 @@ export default function DocumentCodingPage() {
       )}
 
       {showCodePicker && selectionRange && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-lg rounded-md bg-white p-4 shadow-lg">
+        <div className="fixed inset-0 z-30 flex items-center justify-center modal-backdrop">
+          <div className="w-full max-w-4xl max-h-[80vh] overflow-y-auto rounded-md bg-white p-4 shadow-lg modal-panel">
             <h2 className="text-sm font-medium text-slate-800">Apply codes</h2>
             <p className="mt-1 text-xs text-slate-600">
               Select one or more codes to apply. Existing codes for this segment are
               pre‑selected.
             </p>
 
-            <div className="mt-3 space-y-2">
-              <input
-                className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Search codes…"
-                value={codeSearch}
-                onChange={(e) => setCodeSearch(e.target.value)}
-              />
-              <div className="max-h-[50vh] space-y-1 overflow-y-auto border border-slate-200 p-2">
-                {codes
-                  .filter((code) => {
-                    const query = codeSearch.toLowerCase();
-                    if (!query) return true;
-                    return (
-                      code.name.toLowerCase().includes(query) ||
-                      (code.description ?? '').toLowerCase().includes(query)
-                    );
-                  })
-                  .map((code) => (
-                    <label
-                      key={code.id}
-                      className="flex cursor-pointer items-start gap-2 text-xs text-slate-800"
-                    >
-                      <input
-                        type="checkbox"
-                        className="mt-0.5"
-                        checked={selectedCodeIds.includes(code.id)}
-                        onChange={() => toggleCodeSelection(code.id)}
-                      />
-                      <span>
-                        <span className="font-medium">{code.name}</span>
-                        {code.description && (
-                          <span className="block text-slate-500">
-                            {code.description}
+            <div className="mt-3 grid gap-3 md:grid-cols-[2fr,1.5fr]">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <input
+                    className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Search codes…"
+                    value={codeSearch}
+                    onChange={(e) => setCodeSearch(e.target.value)}
+                  />
+                  <div className="max-h-[50vh] space-y-1 overflow-y-auto border border-slate-200 p-2">
+                    {codes
+                      .filter((code) => {
+                        const query = codeSearch.toLowerCase();
+                        if (!query) return true;
+                        return (
+                          code.name.toLowerCase().includes(query) ||
+                          (code.description ?? '').toLowerCase().includes(query)
+                        );
+                      })
+                      .map((code) => (
+                        <label
+                          key={code.id}
+                          className="flex cursor-pointer items-start gap-2 text-xs text-slate-800"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={selectedCodeIds.includes(code.id)}
+                            onChange={() => toggleCodeSelection(code.id)}
+                          />
+                          <span>
+                            <span className="font-medium">{code.name}</span>
+                            {code.description && (
+                              <span className="block text-slate-500">
+                                {code.description}
+                              </span>
+                            )}
+                            {code.flags && code.flags.length > 0 && (
+                              <span className="mt-0.5 block text-[11px] text-slate-500">
+                                {code.flags.join(', ')}
+                              </span>
+                            )}
                           </span>
-                        )}
-                        {code.flags && code.flags.length > 0 && (
-                          <span className="mt-0.5 block text-[11px] text-slate-500">
-                            {code.flags.join(', ')}
-                          </span>
-                        )}
-                      </span>
-                    </label>
-                  ))}
-                {codes.length === 0 && (
-                  <p className="text-xs text-slate-500">
-                    No codes defined yet. Use the form below to add a new code.
+                        </label>
+                      ))}
+                    {codes.length === 0 && (
+                      <p className="text-xs text-slate-500">
+                        No codes defined yet. Use the form below to add a new code.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
+                  <p className="text-xs font-medium text-slate-800">New code</p>
+                  <div className="space-y-1">
+                    <input
+                      className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="Code name"
+                      value={newCodeName}
+                      onChange={(e) => setNewCodeName(e.target.value)}
+                    />
+                    <textarea
+                      className="h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      placeholder="Optional description"
+                      value={newCodeDescription}
+                      onChange={(e) => setNewCodeDescription(e.target.value)}
+                    />
+                  </div>
+                  {codeError && <p className="text-[11px] text-red-600">{codeError}</p>}
+                  <button
+                    type="button"
+                    disabled={creatingCode}
+                    onClick={() => void createCodeFromModal()}
+                    className="inline-flex items-center rounded-md bg-slate-800 px-2 py-1 text-[11px] font-medium text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {creatingCode ? 'Adding…' : 'Add code'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-slate-800">AI suggestions</p>
+                  <button
+                    type="button"
+                    disabled={aiLoading || !settings?.aiEnabled}
+                    onClick={() => void requestAiSuggestions()}
+                    className="btn-secondary"
+                  >
+                    {aiLoading ? 'Thinking…' : 'Ask AI'}
+                  </button>
+                </div>
+                {!settings?.aiEnabled ? (
+                  <p className="text-[11px] text-slate-500">
+                    AI suggestions are disabled. Enable them in Settings to get code ideas.
                   </p>
+                ) : aiError ? (
+                  <p className="text-[11px] text-red-600">{aiError}</p>
+                ) : aiSuggestions.length === 0 ? (
+                  <p className="text-[11px] text-slate-500">
+                    Ask AI to suggest up to five existing or new codes for this segment.
+                  </p>
+                ) : (
+                  <ul className="space-y-2 text-[11px]">
+                    {[...aiSuggestions]
+                      .sort((a, b) => {
+                        if (a.type !== b.type) {
+                          return a.type === 'new' ? -1 : 1;
+                        }
+                        const ac = a.confidence ?? 0;
+                        const bc = b.confidence ?? 0;
+                        return bc - ac;
+                      })
+                      .map((s, idx) => {
+                        if (s.type === 'existing') {
+                          const code = codes.find((c) => c.id === s.codeId);
+                          const name = code?.name ?? 'Unknown code';
+                          return (
+                            <li
+                              key={`${s.type}-${s.codeId}-${idx}`}
+                              className="rounded border border-slate-200 p-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium text-slate-800">{name}</p>
+                                <button
+                                  type="button"
+                                  className="btn-secondary"
+                                  onClick={() => toggleCodeSelection(s.codeId)}
+                                >
+                                  {selectedCodeIds.includes(s.codeId)
+                                    ? 'Remove'
+                                    : 'Apply'}
+                                </button>
+                              </div>
+                              {(s.rationale || s.confidence !== undefined) && (
+                                <div className="mt-1 flex items-center justify-between">
+                                  {s.rationale && (
+                                    <p className="text-slate-600">{s.rationale}</p>
+                                  )}
+                                  {s.confidence !== undefined && (
+                                    <p className="ml-2 text-[10px] text-slate-500">
+                                      Confidence: {s.confidence.toFixed(2)}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+                            </li>
+                          );
+                        }
+
+                        // New code suggestion
+                        return (
+                          <li
+                            key={`${s.type}-${s.name}-${idx}`}
+                            className="rounded border border-slate-200 p-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <p className="font-medium text-slate-800">{s.name}</p>
+                              <button
+                                type="button"
+                                className="btn-secondary"
+                                onClick={() => {
+                                  setNewCodeName(s.name);
+                                  setNewCodeDescription(s.description ?? '');
+                                }}
+                              >
+                                Use as new code
+                              </button>
+                            </div>
+                            {(s.description ||
+                              s.rationale ||
+                              s.confidence !== undefined) && (
+                              <div className="mt-1 space-y-1">
+                                {s.description && (
+                                  <p className="text-slate-600">{s.description}</p>
+                                )}
+                                {s.rationale && (
+                                  <p className="text-slate-500">{s.rationale}</p>
+                                )}
+                                {s.confidence !== undefined && (
+                                  <p className="text-[10px] text-slate-500">
+                                    Confidence: {s.confidence.toFixed(2)}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </li>
+                        );
+                      })}
+                  </ul>
                 )}
               </div>
-            </div>
-
-            <div className="mt-3 space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
-              <p className="text-xs font-medium text-slate-800">New code</p>
-              <div className="space-y-1">
-                <input
-                  className="w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Code name"
-                  value={newCodeName}
-                  onChange={(e) => setNewCodeName(e.target.value)}
-                />
-                <textarea
-                  className="h-16 w-full rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  placeholder="Optional description"
-                  value={newCodeDescription}
-                  onChange={(e) => setNewCodeDescription(e.target.value)}
-                />
-              </div>
-              {codeError && <p className="text-[11px] text-red-600">{codeError}</p>}
-              <button
-                type="button"
-                disabled={creatingCode}
-                onClick={() => void createCodeFromModal()}
-                className="inline-flex items-center rounded-md bg-slate-800 px-2 py-1 text-[11px] font-medium text-white hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {creatingCode ? 'Adding…' : 'Add code'}
-              </button>
             </div>
 
             <div className="mt-3 flex justify-between gap-2">

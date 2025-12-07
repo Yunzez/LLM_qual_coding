@@ -53,6 +53,7 @@ export interface CodedSegment {
 export interface Settings {
   id: 'default';
   aiEnabled: boolean;
+  aiSuggestionLimit?: number;
 }
 
 export interface DbSchema {

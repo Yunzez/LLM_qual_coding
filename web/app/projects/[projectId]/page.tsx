@@ -681,8 +681,8 @@ export default function ProjectDetailPage() {
       )}
 
       {editingCodeId && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg">
+        <div className="fixed inset-0 z-30 flex items-center justify-center modal-backdrop">
+          <div className="w-full max-w-md rounded-md bg-white p-4 shadow-lg modal-panel">
             <h2 className="text-sm font-medium text-slate-800">Edit code</h2>
             <p className="mt-1 text-xs text-slate-600">
               Changes apply to this code across the entire project. Review carefully before
@@ -754,8 +754,8 @@ export default function ProjectDetailPage() {
       )}
 
       {usageCode && (
-        <div className="fixed inset-0 z-20 flex items-center justify-center bg-slate-900/40">
-          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-lg">
+        <div className="fixed inset-0 z-20 flex items-center justify-center modal-backdrop">
+          <div className="w-full max-w-2xl rounded-md bg-white p-4 shadow-lg modal-panel">
             <h2 className="text-sm font-medium text-slate-800">
               Usage of <span className="font-semibold">{usageCode.name}</span>
             </h2>
