@@ -1,4 +1,4 @@
-# LLM Qualitative Coding Platform
+# Rhizome: A bottom-up LLM assisted Qualitative Coding Platform
 
 This repository contains a full‑stack prototype for an LLM‑assisted qualitative coding platform. It is designed for small research teams who want a lightweight environment for doing line‑by‑line coding, double coding, and exploratory analysis with optional AI assistance.
 
