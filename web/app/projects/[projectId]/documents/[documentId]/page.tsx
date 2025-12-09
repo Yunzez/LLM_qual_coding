@@ -1061,12 +1061,15 @@ export default function DocumentCodingPage() {
                                     : 'Apply'}
                                 </button>
                               </div>
-                              {(s.rationale || s.confidence !== undefined) && (
+                              {(s.rationale ||
+                                (typeof s.confidence === 'number' &&
+                                  Number.isFinite(s.confidence))) && (
                                 <div className="mt-1 flex items-center justify-between">
                                   {s.rationale && (
                                     <p className="text-slate-600">{s.rationale}</p>
                                   )}
-                                  {s.confidence !== undefined && (
+                                  {typeof s.confidence === 'number' &&
+                                    Number.isFinite(s.confidence) && (
                                     <p className="ml-2 text-[10px] text-slate-500">
                                       Confidence: {s.confidence.toFixed(2)}
                                     </p>
@@ -1098,7 +1101,8 @@ export default function DocumentCodingPage() {
                             </div>
                             {(s.description ||
                               s.rationale ||
-                              s.confidence !== undefined) && (
+                              (typeof s.confidence === 'number' &&
+                                Number.isFinite(s.confidence))) && (
                               <div className="mt-1 space-y-1">
                                 {s.description && (
                                   <p className="text-slate-600">{s.description}</p>
@@ -1106,7 +1110,8 @@ export default function DocumentCodingPage() {
                                 {s.rationale && (
                                   <p className="text-slate-500">{s.rationale}</p>
                                 )}
-                                {s.confidence !== undefined && (
+                                {typeof s.confidence === 'number' &&
+                                  Number.isFinite(s.confidence) && (
                                   <p className="text-[10px] text-slate-500">
                                     Confidence: {s.confidence.toFixed(2)}
                                   </p>
