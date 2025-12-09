@@ -44,7 +44,10 @@
     {
       "id": "b2xxrSc7X74G4tnUcKIJr",
       "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Example background"
+      "name": "Example background",
+      "flags": [
+        "news specific"
+      ]
     },
     {
       "id": "tFvqr4GVxZw8oXuQHgl8d",
@@ -53,7 +56,6 @@
       "description": "A intro to a typical text news",
       "flags": [
         "news specific",
-        "testing",
         "test-1 flag"
       ]
     },
@@ -61,36 +63,45 @@
       "id": "-N7tE-MdxD1vqypfwKwq4",
       "projectId": "OiT2iTayTDZO378XXRDNr",
       "name": "Investment news",
-      "description": "A code for news segments about investments or venture capital."
+      "description": "A code for news segments about investments or venture capital.",
+      "flags": [
+        "news specific"
+      ]
     },
     {
       "id": "JvNB6g3bBvyoIwHLbiMx3",
       "projectId": "OiT2iTayTDZO378XXRDNr",
       "name": "Metric definition",
-      "description": "Definition of metrics used in software testing or development"
+      "description": "Definition of metrics used in software testing or development",
+      "flags": [
+        "test-1 flag"
+      ]
     },
     {
       "id": "6iOTqYQV0ZqebNNhePuwn",
       "projectId": "OiT2iTayTDZO378XXRDNr",
       "name": "Fuzzing concept",
-      "description": "A code for describing the basics of fuzzing and its application."
-    },
-    {
-      "id": "0lAVCGC_CbnxXX2X-24A0",
-      "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Fuzzing concept",
-      "description": "A code for describing the basics of fuzzing and its application."
+      "description": "A code for describing the basics of fuzzing and its application.",
+      "flags": [
+        "testing of for fuzz"
+      ]
     },
     {
       "id": "OnfO3L5HvotNCsfcHNBry",
       "projectId": "OiT2iTayTDZO378XXRDNr",
       "name": "Fuzzing campaign",
-      "description": "A code for describing a fuzzing campaign and its goals."
+      "description": "A code for describing a fuzzing campaign and its goals.",
+      "flags": [
+        "testing of for fuzz"
+      ]
     },
     {
       "id": "rgekFSyQekC2C_d_nGO64",
       "projectId": "OiT2iTayTDZO378XXRDNr",
-      "name": "Fuzzing framework"
+      "name": "Fuzzing framework",
+      "flags": [
+        "testing of for fuzz"
+      ]
     }
   ],
   "segments": [
@@ -219,6 +230,24 @@
       "text": "(Testing/fuzzing) harness: A harness handles the test setup for a given SUT. The harness wraps the software and initializes it such that it is ready for executing test cases. A harness integrates a SUT into a testing environment.\nlibFuzzer harness: A harness that is compatible with the libFuzzer library. The term refers to the LLVMFuzzerTestOneInput function.",
       "createdBy": "default-user",
       "createdAt": "2025-12-07T05:00:55.412Z"
+    },
+    {
+      "id": "qAzo_gGNikM3izuOdyp_B",
+      "documentId": "81BGTcwvF2T3j1pxdANI3",
+      "startOffset": 171,
+      "endOffset": 405,
+      "text": "Fuzzing/Fuzzer: Fuzz testing, also known as fuzzing, is an automated software testing method that supplies a SUT with invalid, unexpected, or random data as inputs. The program that implements the fuzzing algorithm is called a fuzzer.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-09T01:17:55.397Z"
+    },
+    {
+      "id": "hOjhHX5VCuB6NzAvd-Cyd",
+      "documentId": "u8pUA4u8hqaQxilHH6FqF",
+      "startOffset": 1483,
+      "endOffset": 2154,
+      "text": "SwissHealth Ventures has invested in twelve companies to date – four of them from Switzerland – and two digital health funds. The results are impressive: the twelve existing portfolio companies have created over 3,200 jobs and are financially successful. ‘More than 330,000 CSS members have already used one of their services, giving them access to innovations that improve their lives and make the healthcare system more sustainable,’ explains Fraser. One example is Flow Neuroscience from Sweden: CSS was the first health insurance company worldwide to reimburse Flow's new therapy for the treatment of depression, which is already being used in 16 Swiss clinics today.",
+      "createdBy": "default-user",
+      "createdAt": "2025-12-09T04:29:23.981Z"
     }
   ],
   "codedSegments": [
@@ -293,6 +322,36 @@
       "segmentId": "VbcJqU8NOuOGmgC3IPyb_",
       "codeId": "rgekFSyQekC2C_d_nGO64",
       "createdAt": "2025-12-07T05:00:55.412Z"
+    },
+    {
+      "id": "7r8qR367_v8Y1H2VTPmsu",
+      "segmentId": "qAzo_gGNikM3izuOdyp_B",
+      "codeId": "D3ndoEvNMfvVv2kRU2UHZ",
+      "createdAt": "2025-12-09T01:17:55.397Z"
+    },
+    {
+      "id": "Jc-WfRtTJVp1P6CccJihS",
+      "segmentId": "qAzo_gGNikM3izuOdyp_B",
+      "codeId": "tFvqr4GVxZw8oXuQHgl8d",
+      "createdAt": "2025-12-09T01:17:55.397Z"
+    },
+    {
+      "id": "vsXhWwa6ZQodvOccsdTB1",
+      "segmentId": "qAzo_gGNikM3izuOdyp_B",
+      "codeId": "-N7tE-MdxD1vqypfwKwq4",
+      "createdAt": "2025-12-09T01:17:55.397Z"
+    },
+    {
+      "id": "1wWAkQYWykHtgRyD8dkdd",
+      "segmentId": "qAzo_gGNikM3izuOdyp_B",
+      "codeId": "JvNB6g3bBvyoIwHLbiMx3",
+      "createdAt": "2025-12-09T01:17:55.397Z"
+    },
+    {
+      "id": "JN84E0uKyiBhjNgMBkpbh",
+      "segmentId": "hOjhHX5VCuB6NzAvd-Cyd",
+      "codeId": "-N7tE-MdxD1vqypfwKwq4",
+      "createdAt": "2025-12-09T04:29:23.981Z"
     }
   ],
   "settings": [

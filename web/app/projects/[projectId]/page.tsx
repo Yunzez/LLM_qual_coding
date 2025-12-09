@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { ChangeEvent } from 'react';
+import type { ChangeEvent, DragEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 
@@ -47,7 +47,9 @@ export default function ProjectDetailPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'documents' | 'codes'>('documents');
+  const [activeTab, setActiveTab] = useState<'documents' | 'codes' | 'canvas'>(
+    'documents'
+  );
 
   const [editingCodeId, setEditingCodeId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
@@ -70,6 +72,7 @@ export default function ProjectDetailPage() {
   const [usageError, setUsageError] = useState<string | null>(null);
 
   const [flagsSearch, setFlagsSearch] = useState('');
+  const [draggingCodeId, setDraggingCodeId] = useState<string | null>(null);
 
   const allFlags = useMemo(() => {
     const counts = new Map<string, number>();
@@ -84,6 +87,25 @@ export default function ProjectDetailPage() {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [codes]);
+
+  async function updateCodeFlags(codeId: string, newFlags: string[]) {
+    setError(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/projects/${projectId}/codes/${codeId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flags: newFlags })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || 'Failed to update code flags.');
+      }
+      const updated = (await res.json()) as Code;
+      setCodes((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
 
   function downloadJson(filename: string, data: unknown) {
     const json = JSON.stringify(data, null, 2);
@@ -438,6 +460,17 @@ export default function ProjectDetailPage() {
         >
           Codes
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('canvas')}
+          className={`rounded px-3 py-1 font-medium ${
+            activeTab === 'canvas'
+              ? 'bg-white text-slate-900 shadow'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Code Canvas
+        </button>
       </div>
 
       {activeTab === 'documents' && (
@@ -678,6 +711,157 @@ export default function ProjectDetailPage() {
             </ul>
           </section>
         </div>
+      )}
+
+      {activeTab === 'canvas' && (
+        <section className="card">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="card-title">Code Canvas</h2>
+              <p className="mt-1 text-xs text-slate-600">
+                Drag codes into flag columns to organize your codebook. Codes can live in
+                multiple flags at once. Drop on “Unflagged” to clear all flags.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <div className="flex gap-4 min-w-[640px]">
+              {/* Unflagged column */}
+              <div
+                onDragOver={(e: DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                }}
+                onDrop={async (e: DragEvent<HTMLDivElement>) => {
+                  e.preventDefault();
+                  if (!draggingCodeId) return;
+                  const code = codes.find((c) => c.id === draggingCodeId);
+                  if (!code) return;
+                  await updateCodeFlags(code.id, []);
+                  setDraggingCodeId(null);
+                }}
+                className="flex-1 rounded-md border border-slate-200 bg-slate-50 p-3"
+              >
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Unflagged
+                </h3>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Codes without any flags.
+                </p>
+                <div className="mt-3 space-y-2">
+                  {codes.filter((code) => !code.flags || code.flags.length === 0).length ===
+                  0 ? (
+                    <p className="text-[11px] text-slate-400">
+                      All codes currently have at least one flag.
+                    </p>
+                  ) : (
+                    codes
+                      .filter((code) => !code.flags || code.flags.length === 0)
+                      .map((code) => (
+                        <div
+                          key={code.id}
+                          draggable
+                          onDragStart={(e: DragEvent<HTMLDivElement>) => {
+                            e.dataTransfer.effectAllowed = 'move';
+                            setDraggingCodeId(code.id);
+                          }}
+                          onDragEnd={() => setDraggingCodeId(null)}
+                          className="cursor-move rounded-md border border-slate-200 bg-white p-2 text-xs shadow-sm transition hover:shadow"
+                        >
+                          <p className="font-medium text-slate-800">{code.name}</p>
+                          {code.description && (
+                            <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">
+                              {code.description}
+                            </p>
+                          )}
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+
+              {/* Flag columns */}
+              {allFlags.map((flag) => (
+                <div
+                  key={flag.name}
+                  onDragOver={(e: DragEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                  }}
+                  onDrop={async (e: DragEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    if (!draggingCodeId) return;
+                    const code = codes.find((c) => c.id === draggingCodeId);
+                    if (!code) return;
+                    const existing = code.flags ?? [];
+                    if (existing.includes(flag.name)) {
+                      setDraggingCodeId(null);
+                      return;
+                    }
+                    const nextFlags = [...existing, flag.name];
+                    await updateCodeFlags(code.id, nextFlags);
+                    setDraggingCodeId(null);
+                  }}
+                  className="flex-1 rounded-md border border-slate-200 bg-slate-50 p-3"
+                >
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                    {flag.name}
+                  </h3>
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    {flag.count} code{flag.count === 1 ? '' : 's'}
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {codes.filter((code) => code.flags?.includes(flag.name)).length ===
+                    0 ? (
+                      <p className="text-[11px] text-slate-400">
+                        Drag codes here to apply this flag.
+                      </p>
+                    ) : (
+                      codes
+                        .filter((code) => code.flags?.includes(flag.name))
+                        .map((code) => (
+                          <div
+                            key={`${flag.name}-${code.id}`}
+                            draggable
+                            onDragStart={(e: DragEvent<HTMLDivElement>) => {
+                              e.dataTransfer.effectAllowed = 'move';
+                              setDraggingCodeId(code.id);
+                            }}
+                            onDragEnd={() => setDraggingCodeId(null)}
+                            className="cursor-move rounded-md border border-slate-200 bg-white p-2 text-xs shadow-sm transition hover:shadow"
+                          >
+                            <p className="font-medium text-slate-800">{code.name}</p>
+                            {code.description && (
+                              <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">
+                                {code.description}
+                              </p>
+                            )}
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {(code.flags ?? []).map((f) => (
+                                <button
+                                  key={f}
+                                  type="button"
+                                  onClick={() =>
+                                    void updateCodeFlags(
+                                      code.id,
+                                      (code.flags ?? []).filter((existingFlag) => existingFlag !== f)
+                                    )
+                                  }
+                                  className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-700 hover:bg-slate-200"
+                                >
+                                  <span className="mr-1">{f}</span>
+                                  <span className="text-[9px] text-slate-500">×</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       )}
 
       {editingCodeId && (

@@ -70,7 +70,7 @@ router.post('/ai/suggest', async (req, res, next) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3',
+        model: 'llama3.2',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: JSON.stringify(userPayload) }
