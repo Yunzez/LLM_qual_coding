@@ -503,7 +503,6 @@ export default function DocumentCodingPage() {
     if (!selectionRange) return;
     setAiLoading(true);
     setAiError(null);
-    console.log('Requesting AI suggestions for text:', selectionRange.text);
     try {
       const res = await fetch(`${BACKEND_URL}/ai/suggest`, {
         method: 'POST',
@@ -513,12 +512,14 @@ export default function DocumentCodingPage() {
           projectId,
           documentId,
           projectName: project?.name ?? null,
+          projectDescription: project?.description ?? null,
           codes: codes.map((code) => ({
             id: code.id,
             name: code.name,
             description: code.description,
             flags: code.flags
-          }))
+          })),
+          limit: settings?.aiSuggestionLimit
         })
       });
       if (!res.ok) {
@@ -526,7 +527,6 @@ export default function DocumentCodingPage() {
         throw new Error(body.message || 'Failed to get AI suggestions.');
       }
       const data = (await res.json()) as { suggestions?: AiSuggestion[] };
-      console.log("AI suggestions data:", data);
       setAiSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
     } catch (err) {
       setAiError((err as Error).message);
@@ -1007,7 +1007,7 @@ export default function DocumentCodingPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2">
+              <div className="space-y-2 rounded border border-slate-200 bg-slate-50 p-2 overflow-y-auto max-h-[60vh]">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-medium text-slate-800">AI suggestions</p>
                   <button
